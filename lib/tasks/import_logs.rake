@@ -2,11 +2,18 @@ namespace :import do
   desc "Import log data from a file"
   task :logs, [:filename] => :environment do |t, args|
     filename = args[:filename]
+    valid_votes = 0
+    invalid_lines = 0
 
-    File.open(filename, "r:UTF-8") do |file|
-      file.each_line do |line|
+    File.open(filename, "r:ASCII-8BIT:UTF-8") do |file|
+      file.each_line.with_index(1) do |line, line_number|
+        line.strip!
 
-        next unless valid_log_line?(line.chomp)
+        unless valid_log_line?(line)
+          puts "Invalid line format at line #{line_number}: #{line}"
+          invalid_lines += 1
+          next
+        end
 
         parts = line.split
         campaign_name = parts[2].split(':')[1]
@@ -20,12 +27,12 @@ namespace :import do
           choice: choice
         )
 
-        puts "Created Vote for Campaign: #{campaign_name}"
+        valid_votes += 1
+
       end
     end
-  rescue ArgumentError => e
-    puts "Invalid byte sequence in file: #{filename}"
-    puts e.message
+
+    puts "Import completed. Valid votes: #{valid_votes}, Invalid lines: #{invalid_lines}"
   end
 
   def valid_log_line?(line)
