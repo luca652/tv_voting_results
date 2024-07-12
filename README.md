@@ -1,6 +1,6 @@
 # README
 
-Campaign and Vote models
+CAMPAIGN AND VOTE MODELS
 Since I had to display campaigns and votes in the index page and show page, I decided to create two models in the my rails app: Campaign and Vote. A campaign has many votes and a vote belongs to a campaign. This way we can access all the votes for a campaign with @campaign.votes.
 
 The Campaign model has one attribute: 'name'. 'name' is validated for presence and uniqueness. Uniqueness ensures that when importing logs we don't create duplicate records.
@@ -12,7 +12,7 @@ I also added methods to the Campaign model, which are used in the campaigns cont
 - invalid_votes returns a collection of votes that have a validity of 'pre' or 'post' or the attribute 'choice' is set to 'nil' or ''
 - results returns the valid votes are groups them by candidate
 
-Parsing
+PARSING
 I created a rake task that deals with the parsing of the log data. It iterates over each line of the votes.txt file and validates it in the 'valid_log_line?' method.
 
 'valid_log_line?' checks that:
@@ -27,4 +27,7 @@ If it returns true, the rest of the script extracts the values of 'campaign_name
 
 The script then uses the find_or_create_by! method to either find an existing instance of Campaign based on its unique 'name' or create a new instance if no records exists with that 'name'.
 
-After this, the Vote instance is created with the data extracted
+After this, the Vote instance is created with the data extracted.
+
+TESTS
+I have added RSpec model tests for Campaign and Vote.
