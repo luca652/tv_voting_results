@@ -1,29 +1,38 @@
 namespace :import do
   desc "Import log data from a file"
   task :logs, [:filename] => :environment do |t, args|
-    File.foreach(args[:filename]) do |line|
-      next unless valid_log_line?(line)
+    filename = args[:filename]
 
-      parts = line.split
-      campaign_name = parts[2].split(':')[1]
-      validity = parts[3].split(':')[1]
-      choice = parts[4].split(':')[1]
+    File.open(filename, "r:UTF-8") do |file|
+      file.each_line do |line|
 
-      campaign = Campaign.find_or_create_by!(name: campaign_name)
+        next unless valid_log_line?(line.chomp)
 
-      Vote.create!(
-        campaign: campaign,
-        validity: validity,
-        choice: choice
-      )
+        parts = line.split
+        campaign_name = parts[2].split(':')[1]
+        validity = parts[3].split(':')[1]
+        choice = parts[4].split(':')[1]
+
+        campaign = Campaign.find_or_create_by!(name: campaign_name)
+
+        campaign.votes.create!(
+          validity: validity,
+          choice: choice
+        )
+
+        puts "Created Vote for Campaign: #{campaign_name}"
+      end
     end
+  rescue ArgumentError => e
+    puts "Invalid byte sequence in file: #{filename}"
+    puts e.message
   end
 
   def valid_log_line?(line)
     parts = line.split
-    return false unless parts.size == 8
+    return false unless parts.size == 9
     return false unless parts[0] == 'VOTE'
-    return false unless parts[1].to_i.to_s == parts[1] # Checks if it's a valid integer
+    return false unless parts[1].to_i.to_s == parts[1]
 
     required_keys = ['Campaign:', 'Validity:', 'Choice:', 'CONN:', 'MSISDN:', 'GUID:', 'Shortcode:']
     parts[2..].each_with_index do |part, index|
