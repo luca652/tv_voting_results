@@ -13,7 +13,7 @@ I also added methods to the Campaign model, which are used in the campaigns cont
 - results returns the valid votes are groups them by candidate
 
 # PARSING
-(to import the logs, run 'rails "import:logs[storage/votes.txt]"')
+### (to import the logs, run 'rails "import:logs[storage/votes.txt]"')
 I created a rake task that deals with the parsing of the log data. It iterates over each line of the votes.txt file and validates it in the 'valid_log_line?' method.
 
 'valid_log_line?' checks the validity of the log line based on given requirements with a set of custom methods:
