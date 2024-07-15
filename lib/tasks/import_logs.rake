@@ -15,20 +15,26 @@ namespace :import do
           next
         end
 
-        parts = line.split
-        campaign_name = parts[2].split(':')[1]
-        validity = parts[3].split(':')[1]
-        choice = parts[4].split(':')[1]
+        begin
+          parts = line.split
+          campaign_name = parts[2].split(':')[1]
+          validity = parts[3].split(':')[1]
+          choice = parts[4].split(':')[1]
 
-        campaign = Campaign.find_or_create_by!(name: campaign_name)
+          campaign = Campaign.find_or_create_by!(name: campaign_name)
 
-        campaign.votes.create!(
-          validity: validity,
-          choice: choice
-        )
+          Vote.create!(
+            campaign: campaign,
+            validity: validity,
+            choice: choice
+          )
 
-        valid_votes += 1
-
+          valid_votes += 1
+        rescue => e
+          puts "Error processing line #{line_number}: #{e.message}"
+          puts "Line content: #{line}"
+          invalid_lines += 1
+        end
       end
     end
 
@@ -37,15 +43,38 @@ namespace :import do
 
   def valid_log_line?(line)
     parts = line.split
-    return false unless parts.size == 9
-    return false unless parts[0] == 'VOTE'
-    return false unless parts[1].to_i.to_s == parts[1]
+    has_nine_parts?(parts) &&
+    starts_with_vote?(parts) &&
+    second_element_is_ten_digit_number?(parts) &&
+    all_keys_are_present_in_the_right_order?(parts) &&
+    all_keys_have_expected_value?(parts)
+  end
 
+  def has_nine_parts?(parts)
+    parts.size == 9
+  end
+
+  def starts_with_vote?(parts)
+    parts[0] == 'VOTE'
+  end
+
+  def second_element_is_ten_digit_number?(parts)
+    parts[1].to_i.to_s == parts[1] && parts[1].length == 10
+  end
+
+  def all_keys_are_present_in_the_right_order?(parts)
     required_keys = ['Campaign:', 'Validity:', 'Choice:', 'CONN:', 'MSISDN:', 'GUID:', 'Shortcode:']
     parts[2..].each_with_index do |part, index|
       return false unless part.start_with?(required_keys[index])
     end
+    true
+  end
 
+  def all_keys_have_expected_value?(parts)
+    parts[2..].each do |part|
+      key, value = part.split(':', 2)
+      return false unless key == 'Choice' || value && !value.empty?
+    end
     true
   end
 end
