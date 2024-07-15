@@ -1,4 +1,4 @@
 class Vote < ApplicationRecord
   belongs_to :campaign
-  validates :choice, :validity, presence: true
+  validates :validity, presence: true
 end
